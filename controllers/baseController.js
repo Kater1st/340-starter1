@@ -24,6 +24,9 @@ baseController.buildHome = async function(req, res){
     return ''
   }
 
+  
+
+
   res.render("index", {title: "Home", nav, messages})
 }
 
