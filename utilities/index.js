@@ -1,15 +1,20 @@
 /* ***********************
- * Utilities
- *************************/
+* Utilities
+*************************/
 
 const invModel = require("../models/inventory-model")
 const Util = {}
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
+// NEW: require the feedback validation module
+const feedbackValidation = require("./feedback-validation");
 
 /* ***********************
  * Build the classification view HTML
  *************************/
 Util.buildClassificationGrid = async function(data){
-  let grid
+  let grid = '';
   if(data.length > 0){
     grid = '<ul id="inv-display">'
     data.forEach(vehicle => { 
@@ -33,7 +38,7 @@ Util.buildClassificationGrid = async function(data){
     })
     grid += '</ul>'
   } else { 
-    grid += '<p class="notice">Sorry, no matching vehicles could be found.</p>'
+    grid = '<p class="notice">Sorry, no matching vehicles could be found.</p>'
   }
   return grid
 }
@@ -62,8 +67,7 @@ Util.getNav = async function (req, res, next) {
 }
 
 /* ***********************
- * Build classification select list (used in add-inventory view)
- * classification_id is optional - if passed it pre-selects matching option
+ * Build classification select list
  *************************/
 Util.buildClassificationList = async function (classification_id = null) {
   let data = await invModel.getClassifications()
@@ -108,6 +112,55 @@ function buildVehicleDetailHTML(vehicle) {
   `;
 }
 
+/* ****************************************
+* Middleware to check JWT token
+**************************************** */
+Util.checkJWTToken = (req, res, next) => {
+  if (req.cookies && req.cookies.jwt) {
+    jwt.verify(req.cookies.jwt, process.env.JWT_SECRET, function(err, accountData) {
+      if (err) {
+        req.flash("notice", "Please log in.");
+        res.clearCookie("jwt");
+        return res.redirect("/account/login");
+      }
+      // normalize name to res.locals.account to match other modules
+      res.locals.account = accountData;
+      res.locals.loggedin = 1;
+      next();
+    });
+  } else {
+    next();
+  }
+};
+
+/* ****************************************
+ *  Check Login
+ **************************************** */
+Util.checkLogin = (req, res, next) => {
+  if (res.locals.loggedin) {
+    next();
+  } else {
+    req.flash("notice", "Please log in.");
+    return res.redirect("/account/login");
+  }
+};
+
+/* ****************************************
+ *  Check Account Type (Employee or Admin)
+ **************************************** */
+Util.checkAccountType = (req, res, next) => {
+  if (!res.locals.loggedin || !res.locals.account) {
+    req.flash("notice", "Please log in.");
+    return res.redirect("/account/login");
+  }
+  const acctType = res.locals.account.account_type;
+  if (acctType === "Employee" || acctType === "Admin") {
+    return next();
+  }
+
+  req.flash("notice", "You do not have permission to access that page.");
+  return res.redirect("/account/login");
+};
 
 Util.buildVehicleDetailHTML = buildVehicleDetailHTML
 
@@ -115,5 +168,8 @@ Util.buildVehicleDetailHTML = buildVehicleDetailHTML
  * Middleware for handling errors
  *************************/
 Util.handleErrors = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
+
+// EXPORT the feedback validation so other files can use it
+Util.feedbackValidation = feedbackValidation;
 
 module.exports = Util

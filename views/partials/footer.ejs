@@ -1,6 +1,14 @@
-<% const d = new Date(); let year = d.getFullYear() %>
-<footer>
-    <p class="copyright">&copy; <%= year %>, CSE 340 App |
+<% const d=new Date(); let year=d.getFullYear() %>
+  <footer class="footer">
+    <div class="footer-content">
+      <p class="copyright">&copy; <%= year %> CSE 340 App</p>
+
+      <p class="footer-links">
+        <a href="/feedback">Give Feedback</a>
+        <span class="sep">|</span>
+        <a href="/feedback/list">View All Feedback</a>
+        <span class="sep">|</span>
         <a href="/inv/error500">Trigger 500 Error</a>
-    </p>
-</footer>
+      </p>
+    </div>
+  </footer>

@@ -1,0 +1,17 @@
+<div class="feedback-card">
+  <h1>Customer Feedback</h1>
+
+  <% if (feedbackList && feedbackList.length > 0) { %>
+    <ul class="feedback-list">
+      <% feedbackList.forEach(function(fb) { %>
+        <li class="feedback-item">
+          <h3><%= fb.name %> (<%= fb.email %>)</h3>
+          <span class="feedback-date"><%= new Date(fb.created_at).toLocaleDateString() %></span>
+          <p class="feedback-message"><%= fb.message %></p>
+        </li>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p class="no-feedback">No feedback submitted yet.</p>
+  <% } %>
+</div>
